@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>恒星進化シミュレーター</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=STIX+Two+Math&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="space-bg" aria-hidden="true"></div>
+
+    <main class="app">
+      <div class="credit">by Kazuki Kitaoka</div>
+      <header class="hero">
+        <p class="eyebrow">Stellar Evolution Lab</p>
+        <h1>恒星進化シミュレーター</h1>
+        <p class="lead">
+          恒星の初期質量（太陽質量の何倍か）を選ぶと，<strong class="no-break">白色矮星 / 中性子星 / ブラックホール</strong>のどれになるかを表示します。
+        </p>
+      </header>
+
+      <section class="panel controls" aria-labelledby="mass-title">
+        <h2 id="mass-title">1. 初期質量を選ぶ</h2>
+        <div class="input-row">
+          <label for="massRange">質量（太陽質量）</label>
+          <output id="massOutput" for="massRange massNumber">1.0</output>
+        </div>
+        <div class="mass-inputs">
+          <input
+            id="massRange"
+            type="range"
+            min="0.1"
+            max="60"
+            step="0.1"
+            value="1"
+          />
+          <input
+            id="massNumber"
+            type="number"
+            min="0.1"
+            max="60"
+            step="0.1"
+            value="1"
+          />
+        </div>
+      </section>
+
+      <section class="results-grid">
+        <article class="panel fate-card" aria-live="polite">
+          <h2>2. 最終的な姿</h2>
+          <p class="fate-label">最終天体</p>
+          <p id="fateName" class="fate-name">白色矮星</p>
+          <p id="fateDetail" class="fate-detail"></p>
+          <div id="remnantChip" class="chip">残骸質量: 約 0.6 太陽質量</div>
+        </article>
+
+        <article class="panel visual-card">
+          <h2>3. 進化イメージ</h2>
+          <div class="animation-controls">
+            <button id="playButton" type="button">進化を再生</button>
+            <button id="pauseButton" type="button" disabled>一時停止</button>
+            <label for="speedSelect">速度</label>
+            <select id="speedSelect">
+              <option value="2000">ゆっくり</option>
+              <option value="1300" selected>標準</option>
+              <option value="800">速い</option>
+            </select>
+          </div>
+          <div class="seek-controls">
+            <div class="seek-header">
+              <label for="seekBar">再生バー（段階ジャンプ）</label>
+              <output id="seekStageLabel" for="seekBar">未開始</output>
+            </div>
+            <input id="seekBar" type="range" min="-1" max="0" step="1" value="-1" />
+          </div>
+          <div class="star-visual-wrap">
+            <div id="starVisual" class="star-visual" role="img" aria-label="恒星の色と最終状態のイメージ"></div>
+            <p id="timeOverlay" class="time-overlay">経過時間: 0 年</p>
+          </div>
+          <p id="phaseText" class="phase-text">再生すると，恒星の生成から最終形態まで順番に観察できます。</p>
+          <p id="lifetimeText" class="lifetime"></p>
+        </article>
+
+        <section class="panel hr-panel" aria-live="polite">
+          <h2>4. ヘルツシュプルング・ラッセル図（HR図）</h2>
+          <p class="hr-lead">現在の段階を点で表示し，進化トラックを線で追跡します（左ほど高温，右ほど低温）。</p>
+          <svg id="hrDiagram" class="hr-diagram" viewBox="0 0 640 360" role="img" aria-label="恒星進化のHR図">
+            <rect x="0" y="0" width="640" height="360" class="hr-bg"></rect>
+            <g class="hr-bands">
+              <polyline class="hr-band-main" points="86,42 174,76 264,110 354,144 446,176 536,208"></polyline>
+              <ellipse class="hr-band-giant" cx="500" cy="92" rx="94" ry="64"></ellipse>
+              <ellipse class="hr-band-dwarf" cx="165" cy="286" rx="98" ry="36"></ellipse>
+            </g>
+            <g id="hrGrid"></g>
+            <g class="hr-region-labels" aria-hidden="true">
+              <rect class="hr-region-box main" x="212" y="146" width="86" height="24" rx="4"></rect>
+              <text class="hr-region-text" x="255" y="162" text-anchor="middle">主系列帯</text>
+
+              <rect class="hr-region-box giant" x="442" y="52" width="74" height="24" rx="4"></rect>
+              <text class="hr-region-text" x="479" y="68" text-anchor="middle">巨星領域</text>
+
+              <rect class="hr-region-box dwarf" x="118" y="266" width="102" height="24" rx="4"></rect>
+              <text class="hr-region-text" x="169" y="282" text-anchor="middle">白色矮星領域</text>
+            </g>
+            <g id="hrReferenceStars"></g>
+            <polyline id="hrTrackFull" class="hr-track-full" points=""></polyline>
+            <polyline id="hrTrackProgress" class="hr-track-progress" points=""></polyline>
+            <circle id="hrCurrentPoint" class="hr-current-point" r="7" cx="-40" cy="-40"></circle>
+            <text id="hrPointStage" class="hr-point-stage" x="-40" y="-40"></text>
+            <text class="hr-axis-title" x="337" y="352" text-anchor="middle">表面温度 [K]</text>
+            <text class="hr-axis-title" x="18" y="171" text-anchor="middle" transform="rotate(-90 18 171)">光度 [<tspan class="math-font">Lsun</tspan>]</text>
+            <text class="hr-axis-label" x="90" y="352">高温</text>
+            <text class="hr-axis-label" x="578" y="352">低温</text>
+            <text class="hr-axis-label" x="16" y="28">高光度</text>
+            <text class="hr-axis-label" x="16" y="326">低光度</text>
+          </svg>
+          <p id="hrCaption" class="hr-caption">再生すると，HR図上の点が進化に合わせて移動します。</p>
+        </section>
+      </section>
+
+      <section class="panel timeline-panel" aria-live="polite">
+        <h2>5. 進化の流れ</h2>
+        <ol id="timeline" class="timeline"></ol>
+      </section>
+
+      <section class="panel legend">
+        <h2>6. 判定の目安</h2>
+        <ul>
+          <li>0.08 - 8 太陽質量 : 白色矮星</li>
+          <li>8 - 20 太陽質量 : 中性子星</li>
+          <li>20 太陽質量以上 : ブラックホール</li>
+        </ul>
+      </section>
+    </main>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
