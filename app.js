@@ -621,7 +621,7 @@ function pulseVisual() {
   starVisual.classList.add("pulse");
 }
 
-function updateFromMass(rawMass) {
+function updateFromMass(rawMass, preserveNumberInput = false) {
   const mass = clampMass(rawMass);
   const data = classifyEvolution(mass);
   data.hrTrack = buildHrTrack(data, mass);
@@ -632,7 +632,9 @@ function updateFromMass(rawMass) {
 
   massOutput.value = mass.toFixed(1);
   massRange.value = mass.toFixed(1);
-  massNumber.value = mass.toFixed(1);
+  if (!preserveNumberInput) {
+    massNumber.value = mass.toFixed(1);
+  }
 
   fateName.textContent = data.fate;
   fateDetail.textContent = data.detail;
@@ -652,6 +654,14 @@ massRange.addEventListener("input", (event) => {
 });
 
 massNumber.addEventListener("input", (event) => {
+  const rawMass = event.target.value.trim();
+  if (rawMass === "" || !Number.isFinite(Number(rawMass))) {
+    return;
+  }
+  updateFromMass(Number(rawMass), true);
+});
+
+massNumber.addEventListener("change", (event) => {
   updateFromMass(Number(event.target.value));
 });
 

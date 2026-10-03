@@ -140,17 +140,21 @@ h1 {
 
 input[type="range"] {
   width: 100%;
+  min-height: 32px;
   accent-color: var(--accent);
+  touch-action: pan-y;
 }
 
 input[type="number"] {
   width: 100%;
-  padding: 10px;
+  min-height: 48px;
+  padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(8, 18, 28, 0.95);
   color: var(--text-main);
-  font-size: 1rem;
+  font-size: 16px;
+  touch-action: manipulation;
 }
 
 .results-grid {
@@ -590,7 +594,11 @@ input[type="number"] {
   }
 }
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
+  .lead {
+    white-space: normal;
+  }
+
   .results-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
